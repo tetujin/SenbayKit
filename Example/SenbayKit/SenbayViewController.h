@@ -7,6 +7,7 @@
 //
 
 @import UIKit;
+@import SenbayKit;
 
 @interface SenbayViewController : UIViewController
 

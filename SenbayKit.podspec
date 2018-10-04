@@ -9,7 +9,7 @@
 Pod::Spec.new do |s|
   s.name             = 'SenbayKit'
   s.version          = '0.1.0'
-  s.summary          = 'A short description of SenbayKit.'
+  s.summary          = 'Senbay: A Platform for Instantly Capturing, Integrating, and Restreaming of Synchronized Multiple Sensor-data Streams'
 
 # This description is used to generate tags and improve search results.
 #   * Think: What does it do? Why did you write it? What is the focus?
@@ -18,25 +18,26 @@ Pod::Spec.new do |s|
 #   * Finally, don't worry about the indent, CocoaPods strips it!
 
   s.description      = <<-DESC
-TODO: Add long description of the pod here.
+The spread of smartphones allows us to freely capture video and diverse hardware sensors' data (e.g., accel erometer, gyroscope). While recording such data is relatively simple, it is often challenging to share and restream this data to other people and applications. Such capability is very valuable for a range of applications such as a context-aware prototyping/developing platform, an integrated data recording and analysis tool, and a sensor-data based video editing system. To enable such complex operations, we propose Senbay, a platform for instant sensing, integrating, and restreaming multiple-sensor data streams. The platform embeds collected sensor data into a video frame using an animated two-dimensional barcode via real-time video processing. The video-embedded sensor data, dubbed Senbay Video, can be easily restreamed to other people and reused by data rich, context-aware applications.
                        DESC
 
-  s.homepage         = 'https://github.com/tetujin/SenbayKit'
+  s.homepage         = 'http://www.senbay.info'
   # s.screenshots     = 'www.example.com/screenshots_1', 'www.example.com/screenshots_2'
-  s.license          = { :type => 'MIT', :file => 'LICENSE' }
-  s.author           = { 'tetujin' => 'tetujin@ht.sfc.keio.ac.jp' }
+  s.license          = { :type => 'Apache License, Version 2.0', :file => 'LICENSE' }
+  s.author           = { 'Yuuki Nishiyama' => 'yuuki.nishiyama@oulu.fi' }
   s.source           = { :git => 'https://github.com/tetujin/SenbayKit.git', :tag => s.version.to_s }
   # s.social_media_url = 'https://twitter.com/<TWITTER_USERNAME>'
 
-  s.ios.deployment_target = '8.0'
+  s.ios.deployment_target = '10.0'
 
   s.source_files = 'SenbayKit/Classes/**/*'
-  
+
   # s.resource_bundles = {
-  #   'SenbayKit' => ['SenbayKit/Assets/*.png']
+  #   'SenbayKit-ObjC' => ['SenbayKit-ObjC/Assets/*.png']
   # }
 
   # s.public_header_files = 'Pod/Classes/**/*.h'
-  # s.frameworks = 'UIKit', 'MapKit'
-  # s.dependency 'AFNetworking', '~> 2.3'
+  s.frameworks = 'OpenGLES','AVFoundation','CoreMotion','CoreLocation', 'UIKit', 'CoreBluetooth' #,'MapKit'
+  s.dependency 'CocoaAsyncSocket'
+
 end

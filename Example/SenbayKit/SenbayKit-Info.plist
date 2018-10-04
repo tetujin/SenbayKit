@@ -24,6 +24,14 @@
 	<string>1.0</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSCameraUsageDescription</key>
+	<string>SenbayKit need to access your camera for capturing a video.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>SenbayKit need to access your location information for embedding your location into video frame.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>SenbayKit need to access your microphone for saving audio data into video file.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>SenbayKit need to access your Photo Library for saving your video file.</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
@@ -32,11 +40,12 @@
 	<array>
 		<string>armv7</string>
 	</array>
+	<key>UIStatusBarHidden</key>
+	<true/>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
-		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
 		<string>UIInterfaceOrientationLandscapeRight</string>
+		<string>UIInterfaceOrientationPortrait</string>
 	</array>
 	<key>UISupportedInterfaceOrientations~ipad</key>
 	<array>
