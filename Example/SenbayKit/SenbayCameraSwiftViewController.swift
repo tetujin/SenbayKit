@@ -37,6 +37,7 @@ class SenbayCameraSwiftViewController: UIViewController, SenbayCameraDelegate {
         if let weather = camera.sensorManager.weather{
             weather.activate()
         }
+        
     }
     
     @IBAction func pushedCaptureButton(_ sender: UIButton) {
@@ -73,6 +74,8 @@ class SenbayCameraSwiftViewController: UIViewController, SenbayCameraDelegate {
     func didUpdateQRCodeContent(_ qrcodeContent: String!) {
         rawDataLabel.text = qrcodeContent
     }
+    
+    
 
     override var shouldAutorotate: Bool {
         return  false

@@ -13,7 +13,7 @@ SenbayKit is a development library for adding Senbay functions to your iOS app. 
 
 
 ## Requirements
-SenbayKit requires iOS10 or later
+SenbayKit requires iOS10 or later. This library supports both **Swift** and **Objective-C**.
 
 ## Example
 To run the example project, clone the repo, and run `pod install` from the Example directory first.
@@ -43,15 +43,20 @@ Please add following keys to Info.plist
 
 ### Senbay Camera
 1. Initialize SenbayCamera and set a preview view
-```
-SenbayCamera * camera = [[SenbayCamera alloc] initWithPreviewView:UI_IMAGE_VIEW];
+```objc:Initialize SenbayCamera (Objective-C)
+SenbayCamera * camera = [[SenbayCamera alloc] initWithPreviewView: UI_IMAGE_VIEW];
 camera.delegate = self;
 [camera activate];
+```
+```swift:Initialize SenbayCamera (Swift)
+var camera = SenbayCamera.init(previewView: UI_IMAGE_VIEW)
+camera.delegate = self;
+camera.activate()
 ```
 
 2. Fix a UIViewController orientation
 SenbayCamera supports only LandscapeRigth. Please add following code to your UIViewController for fixing the UIViewController. 
-```
+```objc:Fix Orientation (Objective-C)
 - (BOOL) shouldAutorotate {
     return NO;
 }
@@ -60,24 +65,35 @@ SenbayCamera supports only LandscapeRigth. Please add following code to your UIV
     return UIInterfaceOrientationMaskLandscapeRight;
 }
 ```
+```swift:Fix Orientation (Swift)
+override var shouldAutorotate: Bool {
+    return  false
+}
+
+override var supportedInterfaceOrientations: UIInterfaceOrientationMask{
+    return .landscapeRight
+}
+
+```
 
 3. Start and stop a video recording process
 The recorded video is saved into Photos.app automatically.
-```
-/// start ///
+```objc:Start&Stop (Objective-C)
 [camera startRecording];
-
-/// stop ///
 [camera stopRecording];
 ```
+```swift:Start&Stop (Swift)
+camera.startRecording()
+camera.stopRecording()
 
+```
 <p align="center">
     <img src="Media/sample_senbay_video.gif", width="480">
 </p>
 
 4. Activate sensors
 You can embedded sensor data into an animated QR code on a video. Please activate required sensors from SenbaySensorManager class.
-```
+```objc:Activate Sensors (Objective-C)
 // Accelerometer: ACCX,ACCY,ACCZ
 [camera.sensorManager.imu activateAccelerometer];
 // Gyroscope:     PITC,ROLL,YAW
@@ -85,13 +101,13 @@ You can embedded sensor data into an animated QR code on a video. Please activat
 // Magnetometer:  MAGX,MAGY,MAGZ
 [camera.sensorManager.imu activateMagnetometer];
 
-// GPS:               LONG,LATI,ALTI
+// GPS:         LONG,LATI,ALTI
 [camera.sensorManager.location activateGPS];
-// Compass:           HEAD
+// Compass:     HEAD
 [camera.sensorManager.location activateCompass];
-// Barometer:         AIRP
+// Barometer:   AIRP
 [camera.sensorManager.location activateBarometer];
-// Speedometer:       SPEE
+// Speedometer: SPEE
 [camera.sensorManager.location activateSpeedometer];
 
 // Motion Activity:   MACT
@@ -102,67 +118,113 @@ You can embedded sensor data into an animated QR code on a video. Please activat
 // Screen Brightness: BRIG
 [camera.sensorManager.screenBrightness activate];
 
-// Weather:           TEMP,WEAT,HUMI,WIND
+// Weather:        TEMP,WEAT,HUMI,WIND
 [camera.sensorManager.weather activate];
 
-// HR:                HTBT
+// HR:             HTBT
 [camera.sensorManager.ble activateHRM];
-// BLE Tag:           BTAG
+// BLE Tag:        BTAG
 [camera.sensorManager.ble activateBLETag];
-// Network Socket:    NTAG
+// Network Socket: NTAG
 [camera.sensorManager.networkSocket activateUdpScoketWithPort:5000];
+```
+```swift:Activate Sensors (Swift)
+// Accelerometer: ACCX,ACCY,ACCZ
+if let imu = camera.sensorManager.imu{
+    imu.activateAccelerometer()
+}
+
+// GPS: LONG,LATI,ALTI
+if let location = camera.sensorManager.location {
+    location.activateGPS()
+}
+
+// Weather: TEMP,WEAT,HUMI,WIND
+if let weather = camera.sensorManager.weather{
+    weather.activate()
+}
 ```
 
 If you want to use your original data format, please call -useFreeFormatData:, and set your data to the SenbaySensorManager.
-```
+```objc:Use Free Format Data (Objective-C)
 [camera.sensorManager useFreeFormatData:YES];
 [camera.sensorManager setFreeFormatData:@"YOUR DATA"];
+```
+```swift:Use Free Format Data (Swift)
+camera.sensorManager.useFreeFormatData(true)
+camera.sensorManager.setFreeFormatData("YOUR DATA")
 ```
 
 5. Implement SenbayCameraDelegate on UIViewController
 You can receive update events from SenbayCamera via SenbayCameraDelegate.
-```
+```objc:SenbayCameraDelegate (Objective-C)
 - (void) didUpdateFormattedRecordTime:(NSString *)recordTime;
 - (void) didUpdateCurrentFPS:(int)currentFPS;
 - (void) didUpdateQRCodeContent:(NSString *)qrcodeContent;
 - (void) didUpdateVideoFrame:(UIImage *)videoFrame;
 ```
+```swift:SenbayCameraDelegate (Swift)
+func didUpdateCurrentFPS(_ currentFPS: Int32)
+func didUpdateFormattedRecordTime(_ recordTime: String!)
+func didUpdateQRCodeContent(_ qrcodeContent: String!)
+func didUpdateVideoFrame(_ videoFrame: UIImage!)
+```
 
 ### Senbay Player
 1. Initialize SenbayPlayer on UIViewController
-```
+```objc:Initialize SenbayPlayer (Objective-C)
 SenbayPlaer * player = [[SenbayPlayer alloc] initWithView:UI_VIEW];
 player.delegate = self;
-[player setupPlayerWithLoadedAsset:ASSET];
+[player setupPlayerWithLoadedAsset: ASSET];
+```
+```swift:Initialize SenbayPlayer (Swift)
+player = SenbayPlayer.init(view: playerView)
+player.delegate = self;
+player.setupPlayer(withLoadedAsset: ASSET)
 ```
 
-2. Play and stop the SenbayPlayer 
+2. Play and pause the SenbayPlayer 
+```objc:Play&Pose (Objective-C)
+[player play];
+[player pause];
 ```
-// play
-[player.player play];
-// pause
-[player.player pause];
+```swift:Play&Pose (Swift)
+player.play()
+player.pause()
 ```
 
 3. Implement SenbayPlayerDelegate on UIViewController
 You can receive the decoded sensor data by implementing the delegate.
-```
+```objc:SenbayPlayerDelegate (Objective-C)
 - (void)didDetectQRcode:(NSString *)qrcode;
 - (void)didDecodeQRcode:(NSDictionary *)senbayData;
+```
+```swift:SenbayPlayerDelegate (Swift)
+func didDetectQRcode(_ qrcode: String!)
+func didDecodeQRcode(_ senbayData: [AnyHashable : Any]!)
 ```
 
 ### Senbay Reader
 1.  Initialize SenbayReader on UIViewController
-```
+```objc:Initialize SenbayReader (Objective-C)
 SenbayReader * reader = [[SenbayReader alloc] init];
 reader.delegate = self;
-[reader startCameraReaderWithPreviewView:UI_VIEW];
+[reader startCameraReaderWithPreviewView: UI_VIEW];
+```
+```swift:Initialize SenbayReader (Swift)
+var reader = SenbayReader()
+reader.delegate = self;
+reader.startCameraReader(withPreviewView: UI_VIEW)
 ```
 
 2. Receive detected and decoded data via SenbayReaderDelegate 
-```
+```objc:SenbayReaderDelegate (Objective-C)
 - (void)didDetectQRcode:(NSString *)qrcode;
 - (void)didDecodeQRcode:(NSDictionary *)senbayDat;
+```
+```swift:SenbayReaderDelegate (Swift)
+func didDetectQRcode(_ qrcode: String!)
+func didDecodeQRcode(_ senbayData: [AnyHashable : Any]!)
 ```
 
 ## Author and Contributors
