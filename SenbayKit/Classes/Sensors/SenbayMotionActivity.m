@@ -21,7 +21,7 @@
     return self;
 }
 
-- (BOOL)start
+- (BOOL)activate
 {
     if (![CMMotionActivityManager isActivityAvailable]) {
         return NO;
@@ -46,7 +46,7 @@
     }
 }
 
-- (BOOL)stop
+- (BOOL)deactivate
 {
     if (![CMMotionActivityManager isActivityAvailable]) {
         return NO;

@@ -10,7 +10,7 @@
 
 
 //sample: ca1dcad96d56efb9bba476ee37bfbdbe
-#define OWM_API_URL @"http://api.openweathermap.org/data/2.5/weather?lat=%d&lon=%d&APPID=%@";
+#define OWM_API_URL @"https://api.openweathermap.org/data/2.5/weather?lat=%d&lon=%d&APPID=%@";
 
 typedef void (^OpenWeatherDataUpdateResultHandler)(NSDictionary * _Nullable resultDict, NSData * _Nullable resultData, NSError * _Nullable error);
 

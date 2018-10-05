@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'SenbayKit'
-  s.version          = '0.1.0'
+  s.version          = '0.1.1'
   s.summary          = 'Senbay: A Platform for Instantly Capturing, Integrating, and Restreaming of Synchronized Multiple Sensor-data Streams'
 
 # This description is used to generate tags and improve search results.

@@ -11,6 +11,9 @@
 		4F996AD7216561920009D2E5 /* SenbayCameraViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4F996AD6216561920009D2E5 /* SenbayCameraViewController.m */; };
 		4F996ADA216572C10009D2E5 /* SenbayPlayerViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4F996AD9216572C10009D2E5 /* SenbayPlayerViewController.m */; };
 		4F996ADD21657ACE0009D2E5 /* SenbayReaderViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4F996ADC21657ACE0009D2E5 /* SenbayReaderViewController.m */; };
+		4F996AE4216714170009D2E5 /* SenbayCameraSwiftViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F996AE3216714170009D2E5 /* SenbayCameraSwiftViewController.swift */; };
+		4F996AE621675CDE0009D2E5 /* SenbayPlayerSwiftViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F996AE521675CDE0009D2E5 /* SenbayPlayerSwiftViewController.swift */; };
+		4F996AE821675CEF0009D2E5 /* SenbayReaderSwiftViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4F996AE721675CEF0009D2E5 /* SenbayReaderSwiftViewController.swift */; };
 		6003F58E195388D20070C39A /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6003F58D195388D20070C39A /* Foundation.framework */; };
 		6003F590195388D20070C39A /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6003F58F195388D20070C39A /* CoreGraphics.framework */; };
 		6003F592195388D20070C39A /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6003F591195388D20070C39A /* UIKit.framework */; };
@@ -48,6 +51,10 @@
 		4F996AD9216572C10009D2E5 /* SenbayPlayerViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SenbayPlayerViewController.m; sourceTree = "<group>"; };
 		4F996ADB21657ACE0009D2E5 /* SenbayReaderViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SenbayReaderViewController.h; sourceTree = "<group>"; };
 		4F996ADC21657ACE0009D2E5 /* SenbayReaderViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = SenbayReaderViewController.m; sourceTree = "<group>"; };
+		4F996AE2216714170009D2E5 /* SenbayKit_Example-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "SenbayKit_Example-Bridging-Header.h"; sourceTree = "<group>"; };
+		4F996AE3216714170009D2E5 /* SenbayCameraSwiftViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SenbayCameraSwiftViewController.swift; sourceTree = "<group>"; };
+		4F996AE521675CDE0009D2E5 /* SenbayPlayerSwiftViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SenbayPlayerSwiftViewController.swift; sourceTree = "<group>"; };
+		4F996AE721675CEF0009D2E5 /* SenbayReaderSwiftViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SenbayReaderSwiftViewController.swift; sourceTree = "<group>"; };
 		6003F58A195388D20070C39A /* SenbayKit_Example.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SenbayKit_Example.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		6003F58D195388D20070C39A /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
 		6003F58F195388D20070C39A /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
@@ -115,6 +122,30 @@
 			name = Pods;
 			sourceTree = "<group>";
 		};
+		4F996AE0216712740009D2E5 /* Objective-C */ = {
+			isa = PBXGroup;
+			children = (
+				4F996AD5216561920009D2E5 /* SenbayCameraViewController.h */,
+				4F996AD6216561920009D2E5 /* SenbayCameraViewController.m */,
+				4F996AD8216572C10009D2E5 /* SenbayPlayerViewController.h */,
+				4F996AD9216572C10009D2E5 /* SenbayPlayerViewController.m */,
+				4F996ADB21657ACE0009D2E5 /* SenbayReaderViewController.h */,
+				4F996ADC21657ACE0009D2E5 /* SenbayReaderViewController.m */,
+			);
+			name = "Objective-C";
+			sourceTree = "<group>";
+		};
+		4F996AE1216713F00009D2E5 /* Swift */ = {
+			isa = PBXGroup;
+			children = (
+				4F996AE3216714170009D2E5 /* SenbayCameraSwiftViewController.swift */,
+				4F996AE521675CDE0009D2E5 /* SenbayPlayerSwiftViewController.swift */,
+				4F996AE721675CEF0009D2E5 /* SenbayReaderSwiftViewController.swift */,
+				4F996AE2216714170009D2E5 /* SenbayKit_Example-Bridging-Header.h */,
+			);
+			name = Swift;
+			sourceTree = "<group>";
+		};
 		6003F581195388D10070C39A = {
 			isa = PBXGroup;
 			children = (
@@ -157,12 +188,8 @@
 				873B8AEA1B1F5CCA007FD442 /* Main.storyboard */,
 				6003F5A5195388D20070C39A /* SenbayViewController.h */,
 				6003F5A6195388D20070C39A /* SenbayViewController.m */,
-				4F996AD5216561920009D2E5 /* SenbayCameraViewController.h */,
-				4F996AD6216561920009D2E5 /* SenbayCameraViewController.m */,
-				4F996AD8216572C10009D2E5 /* SenbayPlayerViewController.h */,
-				4F996AD9216572C10009D2E5 /* SenbayPlayerViewController.m */,
-				4F996ADB21657ACE0009D2E5 /* SenbayReaderViewController.h */,
-				4F996ADC21657ACE0009D2E5 /* SenbayReaderViewController.m */,
+				4F996AE1216713F00009D2E5 /* Swift */,
+				4F996AE0216712740009D2E5 /* Objective-C */,
 				71719F9D1E33DC2100824A3D /* LaunchScreen.storyboard */,
 				6003F5A8195388D20070C39A /* Images.xcassets */,
 				6003F594195388D20070C39A /* Supporting Files */,
@@ -265,6 +292,7 @@
 				TargetAttributes = {
 					6003F589195388D20070C39A = {
 						DevelopmentTeam = FH352PYMNC;
+						LastSwiftMigration = 1000;
 					};
 					6003F5AD195388D20070C39A = {
 						TestTargetID = 6003F589195388D20070C39A;
@@ -402,9 +430,12 @@
 			files = (
 				6003F59E195388D20070C39A /* SenbayAppDelegate.m in Sources */,
 				4F996ADA216572C10009D2E5 /* SenbayPlayerViewController.m in Sources */,
+				4F996AE821675CEF0009D2E5 /* SenbayReaderSwiftViewController.swift in Sources */,
 				4F996AD7216561920009D2E5 /* SenbayCameraViewController.m in Sources */,
+				4F996AE621675CDE0009D2E5 /* SenbayPlayerSwiftViewController.swift in Sources */,
 				4F996ADD21657ACE0009D2E5 /* SenbayReaderViewController.m in Sources */,
 				6003F5A7195388D20070C39A /* SenbayViewController.m in Sources */,
+				4F996AE4216714170009D2E5 /* SenbayCameraSwiftViewController.swift in Sources */,
 				6003F59A195388D20070C39A /* main.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -559,14 +590,19 @@
 			baseConfigurationReference = 0247F8BBA42E41BF8A425C77 /* Pods-SenbayKit_Example.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
 				DEVELOPMENT_TEAM = FH352PYMNC;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "SenbayKit/SenbayKit-Prefix.pch";
 				INFOPLIST_FILE = "SenbayKit/SenbayKit-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				MODULE_NAME = ExampleApp;
 				PRODUCT_BUNDLE_IDENTIFIER = "org.cocoapods.demo.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "SenbayKit/SenbayKit_Example-Bridging-Header.h";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 4.2;
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;
@@ -576,14 +612,18 @@
 			baseConfigurationReference = CF53AA2BEDDDBBF365CC79D2 /* Pods-SenbayKit_Example.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_ENABLE_MODULES = YES;
 				DEVELOPMENT_TEAM = FH352PYMNC;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "SenbayKit/SenbayKit-Prefix.pch";
 				INFOPLIST_FILE = "SenbayKit/SenbayKit-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
+				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				MODULE_NAME = ExampleApp;
 				PRODUCT_BUNDLE_IDENTIFIER = "org.cocoapods.demo.${PRODUCT_NAME:rfc1034identifier}";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_OBJC_BRIDGING_HEADER = "SenbayKit/SenbayKit_Example-Bridging-Header.h";
+				SWIFT_VERSION = 4.2;
 				WRAPPER_EXTENSION = app;
 			};
 			name = Release;

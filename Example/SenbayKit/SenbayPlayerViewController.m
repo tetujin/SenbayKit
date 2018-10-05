@@ -48,15 +48,15 @@
 
 
 - (IBAction)pushedPlayButton:(UIButton *)sender {
-    [player.player play];
+    [player play];
 }
 
 - (IBAction)pushedStopButton:(UIButton *)sender {
-    [player.player pause];
+    [player pause];
 }
 
 - (IBAction)pushedCloseButton:(UIButton *)sender {
-    [player.player pause];
+    [player pause];
     [self dismissViewControllerAnimated:YES completion:^{
         
     }];

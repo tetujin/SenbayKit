@@ -78,24 +78,19 @@ The recorded video is saved into Photos.app automatically.
 4. Activate sensors
 You can embedded sensor data into an animated QR code on a video. Please activate required sensors from SenbaySensorManager class.
 ```
-// Accelerometer:     ACCX,ACCY,ACCZ
-[camera.sensorManager.imu      activateAccelerometer];
-
-// Gyroscope:         PITC,ROLL,YAW
-[camera.sensorManager.imu      activateGyroscope];
-
-// Magnetometer:      MAGX,MAGY,MAGZ
-[camera.sensorManager.imu      activateMagnetometer];
+// Accelerometer: ACCX,ACCY,ACCZ
+[camera.sensorManager.imu activateAccelerometer];
+// Gyroscope:     PITC,ROLL,YAW
+[camera.sensorManager.imu activateGyroscope];
+// Magnetometer:  MAGX,MAGY,MAGZ
+[camera.sensorManager.imu activateMagnetometer];
 
 // GPS:               LONG,LATI,ALTI
 [camera.sensorManager.location activateGPS];
-
 // Compass:           HEAD
 [camera.sensorManager.location activateCompass];
-
 // Barometer:         AIRP
 [camera.sensorManager.location activateBarometer];
-
 // Speedometer:       SPEE
 [camera.sensorManager.location activateSpeedometer];
 
@@ -103,8 +98,7 @@ You can embedded sensor data into an animated QR code on a video. Please activat
 [camera.sensorManager.motionActivity activate];
 
 // Battery:           BATT
-[camera.sensorManager.batteryLevel   activate];
-
+[camera.sensorManager.batteryLevel activate];
 // Screen Brightness: BRIG
 [camera.sensorManager.screenBrightness activate];
 
@@ -112,11 +106,9 @@ You can embedded sensor data into an animated QR code on a video. Please activat
 [camera.sensorManager.weather activate];
 
 // HR:                HTBT
-[camera.sensorManager.ble     activateHRM];
-
+[camera.sensorManager.ble activateHRM];
 // BLE Tag:           BTAG
-[camera.sensorManager.ble     activateBLETag];
-
+[camera.sensorManager.ble activateBLETag];
 // Network Socket:    NTAG
 [camera.sensorManager.networkSocket activateUdpScoketWithPort:5000];
 ```
@@ -124,7 +116,7 @@ You can embedded sensor data into an animated QR code on a video. Please activat
 If you want to use your original data format, please call -useFreeFormatData:, and set your data to the SenbaySensorManager.
 ```
 [camera.sensorManager useFreeFormatData:YES];
-[camera.sensorManager  setFreeFormatData:@"YOUR DATA"];
+[camera.sensorManager setFreeFormatData:@"YOUR DATA"];
 ```
 
 5. Implement SenbayCameraDelegate on UIViewController

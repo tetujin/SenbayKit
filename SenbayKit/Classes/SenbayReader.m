@@ -88,8 +88,11 @@
     AVCaptureVideoPreviewLayer *preview = [AVCaptureVideoPreviewLayer layerWithSession:self.session];
     
     preview.frame = previewView.bounds;
+    preview.masksToBounds = YES;
     preview.videoGravity = AVLayerVideoGravityResizeAspectFill;
+    preview.connection.videoOrientation = AVCaptureVideoOrientationPortrait;
     [previewView.layer addSublayer:preview];
+    
 }
 
 - (void) stopCameraReader

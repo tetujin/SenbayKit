@@ -29,4 +29,7 @@
 - (instancetype)initWithView:(UIView *)view;
 - (void)setupPlayerWithLoadedAsset:(AVAsset *)asset;
 
+- (BOOL) play;
+- (BOOL) pause;
+
 @end

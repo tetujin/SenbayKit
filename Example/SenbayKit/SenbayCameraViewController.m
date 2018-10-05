@@ -22,6 +22,7 @@
     // Do any additional setup after loading the view.
     camera = [[SenbayCamera alloc] initWithPreviewView:_previewImageView];
     [camera activate];
+    camera.qrCodeSize = 1280 * 0.18;
     camera.delegate = self;
     isRecording = NO;
     
@@ -36,7 +37,7 @@
 //    // Compass:           HEAD
 //    [camera.sensorManager.location activateCompass];
 //    // Barometer:         AIRP
-//    [camera.sensorManager.location activateBarometer];
+    [camera.sensorManager.location activateBarometer];
 //    // Speedometer:       SPEE
 //    [camera.sensorManager.location activateSpeedometer];
 //    // Motion Activity:   MACT
@@ -46,7 +47,7 @@
 //    // Screen Brightness: BRIG
 //    [camera.sensorManager.screenBrightness activate];
 //    // Weather:           TEMP,WEAT,HUMI,WIND
-//    [camera.sensorManager.weather activate];
+    [camera.sensorManager.weather activate];
 //    // HR:                HTBT
 //    [camera.sensorManager.ble     activateHRM];
 //    // BLE Tag:           BTAG

@@ -36,10 +36,28 @@
     
     playerLayer.frame = self.view.frame;
     [_view.layer addSublayer:playerLayer];
-
-    timer = [NSTimer scheduledTimerWithTimeInterval:1.0/30.0f target:self selector:@selector(getVideoFrame) userInfo:nil repeats:YES];
 }
 
+- (BOOL) play {
+    if (_player == nil) {
+        return NO;
+    }
+    [_player play];
+    timer = [NSTimer scheduledTimerWithTimeInterval:1.0/30.0f target:self selector:@selector(getVideoFrame) userInfo:nil repeats:YES];
+    return YES;
+}
+
+- (BOOL) pause {
+    if (_player == nil) {
+        return NO;
+    }
+    [_player pause];
+    if (timer != nil) {
+        [timer invalidate];
+        timer = nil;
+    }
+    return YES;
+}
 
 - (void)getVideoFrame
 {
