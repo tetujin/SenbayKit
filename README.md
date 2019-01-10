@@ -57,6 +57,7 @@ camera.activate()
 ```
 
 2. Fix a UIViewController orientation
+
 SenbayCamera supports only LandscapeRigth. Please add following code to your UIViewController for fixing the UIViewController. 
 ```objc
 // Objective-C //
@@ -81,6 +82,7 @@ override var supportedInterfaceOrientations: UIInterfaceOrientationMask{
 ```
 
 3. Start and stop a video recording process
+
 The recorded video is saved into Photos.app automatically.
 ```objc
 // Objective-C //
@@ -97,6 +99,7 @@ camera.stopRecording()
 </p>
 
 4. Activate sensors
+
 You can embedded sensor data into an animated QR code on a video. Please activate required sensors from SenbaySensorManager class.
 ```objc
 // Objective-C //
@@ -165,6 +168,7 @@ camera.sensorManager.setFreeFormatData("YOUR DATA")
 ```
 
 5. Implement SenbayCameraDelegate on UIViewController
+
 You can receive update events from SenbayCamera via SenbayCameraDelegate.
 ```objc
 // Objective-C //
@@ -182,8 +186,9 @@ func didUpdateVideoFrame(_ videoFrame: UIImage!)
 ```
 
 6. (Option) Live Stream SenbayVideo via RTMP
+
 RTMP (Real-Time Messaging Protocol) is one of a video, audio, and data streaming protocoal which is suppored on YouTube Live. 
-You can stream SenbayVideo if you want via RTMP on SenbayKit.
+You can stream SenbayVideo via RTMP by the following code.
 
 ```objc
 /// start a broadcast via YouTube Live (Please relace [xxxx-xxxx-xxxx-xxxx] to your stream name. You can get the name from https://www.youtube.com/live_dashboard )
@@ -204,6 +209,7 @@ camera.finishBroadcast()
 ```
 
 7. (Option) Change camera settings
+
 You can cahnge camera settings (e.g., FPS, resolution, video export) using `SenbayCameraConfig` class on `SenbayCamera` before execute `-activate` method.
 
 ```objc
@@ -265,6 +271,7 @@ player.pause()
 ```
 
 3. Implement SenbayPlayerDelegate on UIViewController
+
 You can receive the decoded sensor data by implementing the delegate.
 ```objc
 // Objective-C //
