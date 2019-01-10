@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'SenbayKit'
-  s.version          = '0.1.1'
+  s.version          = '0.2.0'
   s.summary          = 'Senbay: A Platform for Instantly Capturing, Integrating, and Restreaming of Synchronized Multiple Sensor-data Streams'
 
 # This description is used to generate tags and improve search results.
@@ -39,5 +39,5 @@ The spread of smartphones allows us to freely capture video and diverse hardware
   # s.public_header_files = 'Pod/Classes/**/*.h'
   s.frameworks = 'OpenGLES','AVFoundation','CoreMotion','CoreLocation', 'UIKit', 'CoreBluetooth' #,'MapKit'
   s.dependency 'CocoaAsyncSocket'
-
+  s.dependency 'HaishinKit', '~> 0.10.5'
 end

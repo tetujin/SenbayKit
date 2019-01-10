@@ -29,7 +29,8 @@
         _networkSocket  = [[SenbayNetworkSocket alloc] init];
         _batteryLevel   = [[SenbayBattery alloc] init];
         _weather        = [[SenbayOpenWeatherMap alloc] init];
-        [_sensors addObjectsFromArray:@[_imu,_location,_motionActivity,_ble,_screenBrightness,_networkSocket,_batteryLevel,_weather]];
+        _tag            = [[SenbayLocalTag alloc] init];
+        [_sensors addObjectsFromArray:@[_imu,_location,_motionActivity,_ble,_screenBrightness,_networkSocket,_batteryLevel,_weather,_tag]];
     }
     return self;
 }

@@ -9,6 +9,8 @@
 #import "SenbayData.h"
 #import <MobileCoreServices/UTCoreTypes.h>
 
+#import <SenbayKit/SenbayKit-Swift.h>
+
 @implementation SenbayCamera
 {
     // Local photo library instance
@@ -16,10 +18,6 @@
 
     // Video writer for senbay video
     AVAssetWriter * videoWriter;
-    
-    // QR code generator and filter
-    CIFilter  * qrCodeFilter;
-    CIContext * ciContext;
     
     // Main clock timer
     NSTimer   * mainTimer;
@@ -50,70 +48,53 @@
     
     double fpsStartTime;
     int fpsCurrentFrames;
+    
+    RTMPHandler * rtmpHandler;
+    bool isBroadcast;
 }
 
-// @synthesize camera      = _camera;
 @synthesize basePreviewView = _basePreviewView;
-// @synthesize delegate    = _delegate;
-@synthesize isDebug     = _isDebug;
 
 - (instancetype) init
 {
     return [self initWithPreviewView:nil];
 }
 
-- (instancetype)initWithPreviewView:(UIImageView *) previewView
+- (instancetype)initWithPreviewView:(UIImageView *) previewView{
+    return [self initWithPreviewView:previewView config:nil];
+}
+
+- (instancetype)initWithPreviewView:(UIImageView *) previewView config:(SenbayCameraConfig *)config
 {
     self = [super init];
     if (self) {
-        // background color = white;
-        qrBGColorRed    = 255;
-        qrBGColorGreen  = 255;
-        qrBGColorBlue   = 255;
         
-        // block color = black;
-        qrBLKColorRed   =   0;
-        qrBLKColorGreen =   0;
-        qrBLKColorBlue  =   0;
+        _qrcode = [[SenbayQRcode alloc] init];
         
-        // camouflageInterval
-        _camouflageInterval  =   5;
-        _camouflageColorDiff = 100;
-        _isCamouflageQRCodeAutomatically = NO;
+        if (config == nil) {
+            _config = [[SenbayCameraConfig alloc] init];
+        }else{
+            _config = config;
+        }
         
         // set preview view
         _basePreviewView  = previewView;
         
-        // init a QR code generator
-        qrCodeFilter  = [CIFilter filterWithName:@"CIQRCodeGenerator"];
-        [qrCodeFilter setDefaults];
-        ciContext         = [CIContext contextWithOptions:nil];
         previewCIContext  = [CIContext contextWithOptions:nil];
         camouflageContext = [CIContext contextWithOptions:nil];
 
-        // init a URL for video file
-        NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
-        NSString *documentsDirectory = [paths objectAtIndex:0];
-        _videoFileURL = [NSURL fileURLWithPath:[documentsDirectory stringByAppendingPathComponent:@"senbay_video.mov"]];
         library       = [PHPhotoLibrary sharedPhotoLibrary];
         
         // init camera settings
         _isRecording       = NO;
-        _maxFPS            = 60;                                     // 60FPS
-        _videoSize         = AVCaptureSessionPreset1280x720;         // 1280x720
-        videoWidth         = 1280;
-        videoHeight        = 720;
-        _cameraPosition    = AVCaptureDevicePositionBack;            // back camera
-        _cameraOrientation = UIInterfaceOrientationLandscapeRight;   // landscape
-        _qrCodeSize        = videoWidth*0.15;
-        _qrCodeX           = 0;
-        _qrCodeY           = 0;
-        _videoCodec        = AVVideoCodecH264;
-        _videoFileType     = AVFileTypeQuickTimeMovie;
+        
         threadSyncStack    = 0;
         qrCodeGenStack     = 0;
         previewSyncStack   = 0;
         previewImgGenStack = 0;
+        
+        videoWidth         = 1280;
+        videoHeight        = 720;
         
         cameraProcessingQueue = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_HIGH, 0);
         audioProcessingQueue  = dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_LOW,  0);
@@ -131,6 +112,9 @@
                                                      name:UIDeviceOrientationDidChangeNotification
                                                    object:nil];
         
+        rtmpHandler = [[RTMPHandler alloc] init];
+        isBroadcast = false;
+        
     }
     return self;
 }
@@ -143,12 +127,7 @@
 - (bool) activate
 {
     // start preview
-    return [self initCameraWithExportURL:_videoFileURL
-                                    size:_videoSize
-                                position:_cameraPosition
-                             orientation:_cameraOrientation
-                                   codec:_videoCodec
-                                     fps:_maxFPS];
+    return [self initCamera];
 }
 
 - (bool) deactivate
@@ -157,22 +136,24 @@
     return YES;
 }
 
-- (bool) initCameraWithExportURL:(NSURL*) outputURL
-                            size:(AVCaptureSessionPreset)size
-                        position:(AVCaptureDevicePosition)position
-                     orientation:(UIInterfaceOrientation)orientation
-                           codec:(AVVideoCodecType)codec
-                             fps:(int)fps
-{
+- (bool) initCamera{
+    
     NSError *error = nil;
-    [[NSFileManager defaultManager] removeItemAtURL:outputURL error:&error];
+    [[NSFileManager defaultManager] removeItemAtURL:_config.senbayVideoFileURL error:&error];
     if (error!=nil) {
-        if (_isDebug) NSLog(@"[SenbayCamera] %@", error.debugDescription);
+        if (_config.isDebug) NSLog(@"[SenbayCamera] %@", error.debugDescription);
+    }
+    
+    error = nil;
+    [[NSFileManager defaultManager] removeItemAtURL:_config.originalVideoFileURL error:&error];
+    if (error!=nil) {
+        if (_config.isDebug) NSLog(@"[SenbayCamera] %@", error.debugDescription);
     }
     
     ///////////////////////////////////
     // (1) Setup camera input
     NSError * cameraInitError = nil;
+    
     _camera = [AVCaptureDevice defaultDeviceWithMediaType:AVMediaTypeVideo];
     AVCaptureDeviceInput *cameraDeviceInput = [[AVCaptureDeviceInput alloc] initWithDevice:_camera error:&cameraInitError];
     
@@ -185,6 +166,7 @@
     ////////////////////////////////////////
     // (6) Setup video&audio output
     NSDictionary* settings = @{(id)kCVPixelBufferPixelFormatTypeKey:[NSNumber numberWithInt:kCVPixelFormatType_32BGRA]};
+    // NSDictionary* settings = @{(id)kCVPixelBufferPixelFormatTypeKey:[NSNumber numberWithInt:kCVPixelFormatType_420YpCbCr8BiPlanarFullRange]};
     videoDataOutput = [[AVCaptureVideoDataOutput alloc] init];
     videoDataOutput.videoSettings = settings;
     [videoDataOutput setSampleBufferDelegate:self queue:cameraProcessingQueue];
@@ -195,7 +177,7 @@
     //////////////////////////////////
     _captureSession = [[AVCaptureSession alloc] init];
 
-    _captureSession.sessionPreset = _videoSize;
+    _captureSession.sessionPreset = _config.videoSize;
     
     [_captureSession addInput:cameraDeviceInput];
     [_captureSession addOutput:videoDataOutput];
@@ -203,21 +185,16 @@
     [_captureSession addOutput:audioDataOutput];
     
     
-    NSError * assetWriterError = nil;
-    senbayAssetWriter = [[AVAssetWriter alloc] initWithURL:outputURL
-                                                  fileType:_videoFileType
-                                                     error:&assetWriterError];
-    
-    if(size == AVCaptureSessionPreset3840x2160){
+    if(_config.videoSize == AVCaptureSessionPreset3840x2160){
         videoWidth = 3840;
         videoHeight = 2160;
-    }else if(size == AVCaptureSessionPreset1920x1080){
+    }else if(_config.videoSize == AVCaptureSessionPreset1920x1080){
         videoWidth = 1920;
         videoHeight = 1080;
-    }else if(size == AVCaptureSessionPreset1280x720){
+    }else if(_config.videoSize == AVCaptureSessionPreset1280x720){
         videoWidth = 1280;
         videoHeight = 720;
-    }else if(size == AVCaptureSessionPreset640x480){
+    }else if(_config.videoSize == AVCaptureSessionPreset640x480){
         videoWidth = 640;
         videoHeight = 480;
     }
@@ -227,17 +204,31 @@
                                       [NSNumber numberWithInt:videoWidth],  AVVideoWidthKey,
                                       [NSNumber numberWithInt:videoHeight], AVVideoHeightKey,
                                      nil ];
-    videoInput = [[AVAssetWriterInput alloc] initWithMediaType:AVMediaTypeVideo outputSettings:outputSettings];
-    videoInput.expectsMediaDataInRealTime = YES;
-    audioInput = [[AVAssetWriterInput alloc] initWithMediaType:AVMediaTypeAudio outputSettings:nil];
-    audioInput.expectsMediaDataInRealTime = YES;
-    //if ([senbayAssetWriter  canAddInput:videoInput]) {
-        [senbayAssetWriter  addInput:videoInput];
-    //}
-    //if ([senbayAssetWriter  canAddInput:audioInput]) {
-        [senbayAssetWriter  addInput:audioInput];
-    //}
+    // senbay video asset
+    NSError * assetWriterError = nil;
+    senbayAssetWriter = [[AVAssetWriter alloc] initWithURL:_config.senbayVideoFileURL
+                                                  fileType:_config.videoFileType
+                                                     error:&assetWriterError];
+    senbayVideoInput = [[AVAssetWriterInput alloc] initWithMediaType:AVMediaTypeVideo outputSettings:outputSettings];
+    senbayVideoInput.expectsMediaDataInRealTime = YES;
+    senbayAudioInput = [[AVAssetWriterInput alloc] initWithMediaType:AVMediaTypeAudio outputSettings:nil];
+    senbayAudioInput.expectsMediaDataInRealTime = YES;
+    [senbayAssetWriter  addInput:senbayVideoInput];
+    [senbayAssetWriter  addInput:senbayAudioInput];
     
+    // original video asset
+    NSError * originalAssetWriterError = nil;
+    originalAssetWriter = [[AVAssetWriter alloc] initWithURL:_config.originalVideoFileURL
+                                                  fileType:_config.videoFileType
+                                                     error:&originalAssetWriterError];
+    originalVideoInput = [[AVAssetWriterInput alloc] initWithMediaType:AVMediaTypeVideo outputSettings:outputSettings];
+    originalVideoInput.expectsMediaDataInRealTime = YES;
+    originalAudioInput = [[AVAssetWriterInput alloc] initWithMediaType:AVMediaTypeAudio outputSettings:nil];
+    originalAudioInput.expectsMediaDataInRealTime = YES;
+    [originalAssetWriter  addInput:originalVideoInput];
+    [originalAssetWriter  addInput:originalAudioInput];
+    
+    // set video orientation
     [_captureSession beginConfiguration];
     for ( AVCaptureConnection *connection in [videoDataOutput connections] ) {
         if ([connection isVideoOrientationSupported]) {
@@ -247,25 +238,57 @@
     }
     [_captureSession commitConfiguration];
     
-    // Start recording
-    [_captureSession startRunning];
-    
-    [self configureCameraForHighestFrameRate:_camera size:size maxFPS:fps];
+    [self configureCameraForHighestFrameRate:_camera size:_config.videoSize maxFPS:_config.maxFPS];
 
-    if (_isCamouflageQRCodeAutomatically){
+    // set FPS
+    NSError *deviceConfigError;
+    [_camera lockForConfiguration:&deviceConfigError];
+    if (deviceConfigError == nil) {
+        if (_camera.activeFormat.videoSupportedFrameRateRanges){
+            [_camera setActiveVideoMinFrameDuration:CMTimeMake(1, _config.minFPS)];
+            [_camera setActiveVideoMaxFrameDuration:CMTimeMake(1, _config.maxFPS)];
+        }
+    }
+    [_camera unlockForConfiguration];
+    
+    if (_config.isCamouflageQRCode){
         if(camouflageTimer != nil){
             [camouflageTimer invalidate];
             camouflageTimer = nil;
         }
-        if (_isDebug) {
-            NSLog(@"[SenbayCamera] Camouflage Interval   = %f second", _camouflageInterval);
-            NSLog(@"[SenbayCamera] Camouflage Color Diff = %d (0-255)", _camouflageColorDiff);
+        if (_config.isDebug) {
+            NSLog(@"[SenbayCamera] Camouflage Interval   = %f second", _config.camouflageInterval);
         }
-        [NSTimer scheduledTimerWithTimeInterval:_camouflageInterval repeats:YES block:^(NSTimer * _Nonnull timer) {
+        [NSTimer scheduledTimerWithTimeInterval:_config.camouflageInterval repeats:YES block:^(NSTimer * _Nonnull timer) {
             self->camouflageFlag = YES;
         }];
     }
+    
+    // Start recording
+    [_captureSession startRunning];
+    
     return YES;
+}
+
+- (void) startBroadcastWithStreamName:(NSString *)streamName endpointURL:(NSString *)endpointURL{
+    [rtmpHandler broadcastStartedWithSetupInfo:@{@"endpointURL":endpointURL,
+                                                 @"streamName":streamName}];
+    isBroadcast = YES;
+}
+
+- (void) finishBroadcast {
+    [rtmpHandler broadcastFinished];
+    isBroadcast = NO;
+}
+
+- (void) pouseBroadcast{
+    [rtmpHandler broadcastPaused];
+    isBroadcast = NO;
+}
+
+- (void) resumeBroadcast{
+    [rtmpHandler broadcastResumed];
+    isBroadcast = YES;
 }
 
 - (void) onOrientationChanged:(id)sender {
@@ -286,9 +309,7 @@
 }
 
 
-- (void)captureOutput:(AVCaptureOutput *)output
-didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
-       fromConnection:(AVCaptureConnection *)connection
+- (void)captureOutput:(AVCaptureOutput *)output didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer fromConnection:(AVCaptureConnection *)connection
 {
     // Measuring FPS
     if (output == videoDataOutput) {
@@ -307,7 +328,6 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
             fpsStartTime = now;
         }
     }
-    
     
     if( !CMSampleBufferDataIsReady(sampleBuffer) ){
         return;
@@ -329,24 +349,52 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
     }
     
     if(_isRecording && !haveStartedSession){
-        [senbayAssetWriter startSessionAtSourceTime:CMSampleBufferGetPresentationTimeStamp(sampleBuffer)];
+        [senbayAssetWriter   startSessionAtSourceTime:CMSampleBufferGetPresentationTimeStamp(sampleBuffer)];
+        [originalAssetWriter startSessionAtSourceTime:CMSampleBufferGetPresentationTimeStamp(sampleBuffer)];
         haveStartedSession = YES;
     }else if (!_isRecording && haveStartedSession){
         return;
     }
 
     if(_isRecording){
-        // AudioとVideoのinputはそれぞれ処理するプロセスが違うので注意
         if (output == audioDataOutput) { // audio
-            if ([audioInput isReadyForMoreMediaData]) {
-                [audioInput appendSampleBuffer:sampleBuffer];
+            if (_config.isExportOriginalVideo) {
+                if ([originalAudioInput isReadyForMoreMediaData]) {
+                    [originalAudioInput appendSampleBuffer:sampleBuffer];
+                }
             }
-        } else { // video
+            if (_config.isExportSenbayVideo){
+                if ([senbayAudioInput isReadyForMoreMediaData]) {
+                    [senbayAudioInput appendSampleBuffer:sampleBuffer];
+                }
+            }
+        } else if (output == videoDataOutput ){ // video
+            if (_config.isExportOriginalVideo) {
+                if ([originalVideoInput isReadyForMoreMediaData]) {
+                    [originalVideoInput appendSampleBuffer:sampleBuffer];
+                }
+            }
             [self processVideoSampleBuffer:sampleBuffer];
+            if (_config.isExportSenbayVideo){
+                if ([senbayVideoInput isReadyForMoreMediaData]) {
+                    [senbayVideoInput appendSampleBuffer:sampleBuffer];
+                }
+            }
         }
-    }else{
-
     }
+    
+    if ([self.delegate respondsToSelector:@selector(senbayCaptureOutput:didOutputSampleBuffer:fromConnection:)]) {
+        [self.delegate senbayCaptureOutput:output didOutputSampleBuffer:sampleBuffer fromConnection:connection];
+    }
+    
+    if(isBroadcast){
+        if (output == audioDataOutput) { // audio
+            [rtmpHandler processSampleBuffer:sampleBuffer withType:RPSampleBufferTypeAudioMic];
+        } else if (output == videoDataOutput ){ // video
+            [rtmpHandler processSampleBuffer:sampleBuffer withType:RPSampleBufferTypeVideo];
+        }
+    }
+    
 }
 
 - (void )processVideoSampleBuffer:(CMSampleBufferRef)sampleBuffer
@@ -372,14 +420,17 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
                                                      CVPixelBufferGetHeight(pixelBuffer))];
         // NSLog(@"x:%d, y:%d",(self->_qrCodeX) ,  (self->_qrCodeY) );
         [self camouflageQRCodeByColorOnCGImageRef:videoImage
-                                                x: (self->_qrCodeX)
-                                                y: (self->_qrCodeY)];
+                                                x: (self->_config.qrcodePositionX)
+                                                y: (self->_config.qrcodePositionY)];
         CGImageRelease(videoImage);
         self->camouflageFlag = NO;
     }
     
     [eaglCIContext render:qrCodeLayerCGImage toCVPixelBuffer:pixelBuffer
-                   bounds:CGRectMake(_qrCodeX, videoHeight-_qrCodeY-_qrCodeSize, _qrCodeSize, _qrCodeSize)
+                   bounds:CGRectMake(_config.qrcodePositionX,
+                                     videoHeight-_config.qrcodePositionY-_config.qrcodeSize,
+                                     _config.qrcodeSize,
+                                     _config.qrcodeSize)
                colorSpace:CGColorSpaceCreateDeviceRGB()];
     
     CIImage *captureUIImage = [[CIImage alloc] initWithCVPixelBuffer:pixelBuffer];
@@ -415,31 +466,33 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
             
         });
     }else{
-        NSLog(@"Preview Img Sync Stack: %d", self->previewImgGenStack);
+        // NSLog(@"Preview Img Sync Stack: %d", self->previewImgGenStack);
         CVPixelBufferUnlockBaseAddress(pixelBuffer, 0);
     }
     
-    ///////////////////////////////////
-    if ([videoInput isReadyForMoreMediaData]) {
-        [self->videoInput appendSampleBuffer:sampleBuffer];
-    }
+//    ///////////////////////////////////
+//    if (_config.isExportSenbayVideo){
+//        if ([videoInput isReadyForMoreMediaData]) {
+//            [self->videoInput appendSampleBuffer:sampleBuffer];
+//        }
+//    }
 }
 
 - (void)setQRCodeContent:(NSString *)content
 {
-    UIImage * qrcode = [self generateQRCodeImageWithText:content
-                                                    size:self->_qrCodeSize];
+    UIImage * qrcodeImg = [_qrcode generateQRCodeImageWithText:content
+                                                    size:self->_config.qrcodeSize];
     UIImage * qrcodeLayer = [self generateQRCodeLayerWithBackgroundWidth:self->videoWidth
                                                         backgroundHeight:self->videoHeight
-                                                             qrCodeImage:qrcode
-                                                                       x:self->_qrCodeX
-                                                                       y:self->_qrCodeY];
-    self->qrCodeLayer = qrcodeLayer;
+                                                             qrCodeImage:qrcodeImg
+                                                                       x:self->_config.qrcodePositionX
+                                                                       y:self->_config.qrcodePositionY];
+    self->qrcodeLayer = qrcodeLayer;
 }
 
 - (UIImage *)getQRCodeFilterLayer
 {
-    return self->qrCodeLayer;
+    return self->qrcodeLayer;
 }
 
 
@@ -448,8 +501,9 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
                                     maxFPS:(int)fps
 {
     for ( AVCaptureDeviceFormat *format in device.formats) {
-        NSLog(@"%@",format.debugDescription);
-
+        if(_config.isDebug){
+            NSLog(@"%@",format.debugDescription);
+        }
     }
     
     BOOL breakFlag = NO;
@@ -460,7 +514,8 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
             CMFormatDescriptionRef desc = format.formatDescription;
             CMVideoDimensions dimensions = CMVideoFormatDescriptionGetDimensions(desc);
             int32_t vWidth = dimensions.width;
-            if (vWidth == videoWidth && range.maxFrameRate == 60) {
+            // NSLog(@"[width] %d [range] %d",vWidth,(int)range.maxFrameRate);
+            if (vWidth == (int)videoWidth && (int)range.maxFrameRate <= 60) {
                 bestFormat = format;
                 bestFrameRateRange = range;
                 breakFlag = YES;
@@ -507,116 +562,6 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
 }
 
 
-- (UIImage *) generateQRCodeImageWithText:(NSString *)text size:(float)size
-{
-    UIImage *image = nil;
-    @autoreleasepool {
-        // generate data for QR code
-        NSData *data = [text dataUsingEncoding:NSUTF8StringEncoding];
-        [qrCodeFilter setValue:data forKey:@"inputMessage"];
-        [qrCodeFilter setValue:@"L" forKey:@"inputCorrectionLevel"];
-
-        // L: 7%  -> 4,296 bytes
-        // M: 15% -> 3,391 bytes
-        // Q: 25% -> 2,420 bytes
-        // H: 30% -> 1,852 bytes
-        
-        // convert CGImage to UIImage
-        CIImage * qrcode = [qrCodeFilter outputImage];
-        
-        CGImageRef cgimg = [ciContext createCGImage:qrcode fromRect:[qrcode extent]];
-        
-        if (![self isWhite:qrBGColorRed green:qrBGColorGreen blue:qrBGColorBlue] ||
-            ![self isBlack:qrBLKColorRed green:qrBLKColorGreen blue:qrBLKColorBlue]) {
-            NSUInteger width            = CGImageGetWidth(cgimg);
-            NSUInteger height           = CGImageGetHeight(cgimg);
-            CGColorSpaceRef colorSpace  = CGColorSpaceCreateDeviceRGB();
-            unsigned char *rawData      = malloc(height * width * 4);
-            NSUInteger bytesPerPixel    = 4;
-            NSUInteger bytesPerRow      = bytesPerPixel * width;
-            NSUInteger bitsPerComponent = 8;
-            CGContextRef context = CGBitmapContextCreate(rawData, width, height, bitsPerComponent, bytesPerRow, colorSpace, kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
-            CGColorSpaceRelease(colorSpace);
-            
-            CGContextDrawImage(context, CGRectMake(0, 0, width, height), cgimg);
-            CGContextRelease(context);
-            
-            // Now your rawData contains the image data in the RGBA8888 pixel format.
-            int x = 0;
-            int y = 0;
-            for(x=0; x<width; x++){
-                for(y=0; y<height; y++){
-                    long long byteIndex = (bytesPerRow * x) + y * bytesPerPixel;
-                    int r = rawData[byteIndex];
-                    int g = rawData[byteIndex + 1];
-                    int b = rawData[byteIndex + 2];
-                    // int a = rawData[byteIndex + 3];
-                    if(r==0 && g==0 && b==0){ // convert a black block
-                        if (![self isBlack:qrBLKColorRed green:qrBLKColorGreen blue:qrBLKColorBlue]) {
-                            rawData[byteIndex] = qrBLKColorRed ; // r
-                            rawData[byteIndex + 1] = qrBLKColorGreen; // g
-                            rawData[byteIndex + 2] = qrBLKColorBlue ; // b
-                            // rawData[byteIndex + 3] = components[3] * 255; // a
-                        }
-                    } else if(r==255 && g==255 && b==255){ // convert a white block
-                        if(![self isWhite:qrBGColorRed green:qrBGColorGreen blue:qrBGColorBlue]){
-                            rawData[byteIndex] = qrBGColorRed ; // r
-                            rawData[byteIndex + 1] = qrBGColorGreen; // g
-                            rawData[byteIndex + 2] = qrBGColorBlue ; // b
-                            // rawData[byteIndex + 3] = components[3] * 255; // a
-                        }
-                    }
-                }
-            }
-            
-            CGImageRelease(cgimg);
-            
-            // generate a new CGImage with the new raw data (new color)
-            CGContextRef newcontext = CGBitmapContextCreate (rawData, width, height, 8, width * 4, colorSpace, kCGImageAlphaPremultipliedLast);
-            CGImageRef imageRef = CGBitmapContextCreateImage(newcontext);
-            CGContextRelease(newcontext);
-            CGColorSpaceRelease(colorSpace);
-            
-            // generate a new NSImage using the CGImage
-            image = [[UIImage alloc] initWithCGImage:imageRef scale:1.0f orientation:UIImageOrientationUp];
-            CGImageRelease(imageRef);
-            
-            free(rawData);
-        }else{
-            // generate a UIImage using the CIImage
-            image = [UIImage imageWithCGImage:cgimg scale:1.0f orientation:UIImageOrientationUp];
-            CGImageRelease(cgimg);
-        }
-        
-        // scale the generated QR code
-        UIGraphicsBeginImageContext(CGSizeMake(size, size));
-        CGContextRef context = UIGraphicsGetCurrentContext();
-        CGContextSetInterpolationQuality(context, kCGInterpolationNone); // set an interpolation method
-        [image drawInRect:CGRectMake(0, 0, size, size)];
-        image = UIGraphicsGetImageFromCurrentImageContext();
-        UIGraphicsEndImageContext();
-    }
-    return image;
-}
-
-- (UIImage *) fillImage:(UIImage *)baseImage
-              withColor:(UIColor *)color
-{
-    CGRect rect = CGRectMake(0, 0, 24, 24);
-    
-    UIImage *image = [baseImage imageWithRenderingMode:UIImageRenderingModeAlwaysTemplate];
-    
-    UIGraphicsBeginImageContextWithOptions(rect.size, NO, 0.0);
-    
-    [color setFill];
-    [image drawInRect:rect];
-    
-    UIImage *editedImage = UIGraphicsGetImageFromCurrentImageContext();
-    UIGraphicsEndImageContext();
-    return editedImage;
-}
-
-
 - (UIImage *)imageWithColor:(UIColor *)color
                        rect:(CGRect)rect
 {
@@ -632,6 +577,7 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
     
     return image;
 }
+
 
 /////// QR code color methods
 - (void)camouflageQRCodeByColorOnCGImageRef:(CGImageRef)imageRef
@@ -649,119 +595,20 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
     CGContextRef context = CGBitmapContextCreate(rawData, width, height, bitsPerComponent, bytesPerRow, colorSpace, kCGImageAlphaPremultipliedLast | kCGBitmapByteOrder32Big);
     CGColorSpaceRelease(colorSpace);
     
-    //////////////////////
-//    UIImage * img = [UIImage imageWithCGImage:imageRef];
-//    UIImage * frame = [self imageWithColor:UIColor.redColor rect:CGRectMake(0, 0, _qrCodeSize , _qrCodeSize)];
-//    // グラフィックスコンテキストを作る
-//    CGSize size = { img.size.width, img.size.height};
-//    UIGraphicsBeginImageContext(size);
-//
-//    [img drawInRect:CGRectMake(0, 0, img.size.width, img.size.height)];
-//    [frame drawInRect:CGRectMake(_qrCodeX, _qrCodeY, _qrCodeSize, _qrCodeSize)];
-//
-//    // 合成した画像を取得する
-//    UIImage* compositeImage = UIGraphicsGetImageFromCurrentImageContext();
-//    UIGraphicsEndImageContext();
-    //////////////////////
-    
     CGContextDrawImage(context, CGRectMake(0, 0, width, height), imageRef);
     CGContextRelease(context);
     unsigned long byteIndex = (bytesPerRow * x) + y * bytesPerPixel;
 
-    qrBGColorRed   = rawData[byteIndex];
-    qrBGColorGreen = rawData[byteIndex + 1];
-    qrBGColorBlue  = rawData[byteIndex + 2];
+    int r = rawData[byteIndex];
+    int g = rawData[byteIndex + 1];
+    int b = rawData[byteIndex + 2];
+    [_qrcode camouflageByBackgroundColorWithRead:r green:g blue:b];
     // unsigned long byteIndex = (x * 4) * y;
 
-    
-    double comp = (qrBGColorRed + qrBGColorGreen+qrBGColorBlue)/3;
-    if (comp > 127) {
-//        qrBLKColorRed   = 0;
-//        qrBLKColorGreen = 0;
-//        qrBLKColorBlue  = 0;
-        qrBLKColorRed   = qrBGColorRed   - _camouflageColorDiff ;
-        qrBLKColorGreen = qrBGColorGreen - _camouflageColorDiff;
-        qrBLKColorBlue  = qrBGColorBlue  - _camouflageColorDiff;
-        if(qrBLKColorRed   < 0)  qrBLKColorRed =0;
-        if(qrBLKColorGreen < 0)  qrBLKColorGreen =0;
-        if(qrBLKColorBlue  < 0)  qrBLKColorBlue =0;
-    }else{
-//        qrBLKColorRed   = 255;
-//        qrBLKColorGreen = 255;
-//        qrBLKColorBlue  = 255;
-        qrBLKColorRed   = qrBGColorRed   + _camouflageColorDiff;
-        qrBLKColorGreen = qrBGColorGreen + _camouflageColorDiff;
-        qrBLKColorBlue  = qrBGColorBlue  + _camouflageColorDiff;
-        if(qrBLKColorRed   > 255)   qrBLKColorRed =255;
-        if(qrBLKColorGreen > 255) qrBLKColorGreen =255;
-        if(qrBLKColorBlue  > 255)  qrBLKColorBlue =255;
-    }
-
     free(rawData);
-//
 //    CFRelease(dataRef);
     
 }
-
-- (void)setQRCodeBackgroundColor:(UIColor *)color
-{
-    const CGFloat *components = CGColorGetComponents(color.CGColor);
-    int r = components[0] * 255 ; // r
-    int g = components[1] * 255 ; // g
-    int b = components[2] * 255 ; // b
-    [self setQRCodeBackgroundColorWithRead:r green:g blue:b];
-}
-
-- (void)setQRCodeBlockColor:(UIColor *)color
-{
-    const CGFloat *components = CGColorGetComponents(color.CGColor);
-    int r = components[0] * 255 ; // r
-    int g = components[1] * 255 ; // g
-    int b = components[2] * 255 ; // b
-    [self setQRCodeBlockColorWithRead:r green:g blue:b];
-}
-
-- (void)setQRCodeBackgroundColorWithRead:(int)r
-                                   green:(int)g
-                                    blue:(int)b
-{
-    qrBGColorRed = r;
-    qrBGColorGreen = g;
-    qrBGColorBlue = b;
-}
-
-- (void)setQRCodeBlockColorWithRead:(int)r
-                              green:(int)g
-                               blue:(int)b
-{
-    qrBLKColorRed = r;
-    qrBLKColorGreen = g;
-    qrBLKColorBlue = b;
-}
-
-
-- (BOOL) isWhite:(int)r
-           green:(int)g
-            blue:(int)b
-{
-    if (r==255 && g==255 && b==255){
-        return YES;
-    }else{
-        return NO;
-    }
-}
-
-- (BOOL) isBlack:(int)r
-           green:(int)g
-            blue:(int)b
-{
-    if (r==0 && g==0 && b==0){
-        return YES;
-    }else{
-        return NO;
-    }
-}
-
 
 /**
  * Start recoding a Senbay video.(This method is called by -pushedCaptureButton:sender)
@@ -778,9 +625,11 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
             // start movie writer for senbay video
             // old // [self->senbayVideoWriter startRecording];
             self->haveStartedSession = NO;
-            [self->senbayAssetWriter startWriting];
             
-            if (self-> _isDebug) NSLog(@"start...");
+            [self->senbayAssetWriter startWriting];
+            [self->originalAssetWriter startWriting];
+            
+            if (self->_config.isDebug) NSLog(@"start...");
             // Start a timer for updating senbay data
             self->startTime = [NSDate date];
             self->mainTimer = [NSTimer scheduledTimerWithTimeInterval:0.1f
@@ -800,30 +649,42 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
  */
 - (void) stopRecording
 {
-    if (self->_isDebug) NSLog(@"...stop");
+    if (self->_config.isDebug) NSLog(@"...stop");
     self->_isRecording = NO;
     //[_senbayPreviewView setHidden:YES];
     // [self setCameraPreview];
     
     dispatch_sync(cameraProcessingQueue, ^{
-        [self->videoInput markAsFinished];
-        [self->audioInput markAsFinished];
+        
+        [self->senbayVideoInput markAsFinished];
+        [self->senbayAudioInput markAsFinished];
         [self->senbayAssetWriter finishWritingWithCompletionHandler:^{
             dispatch_async(dispatch_get_main_queue(), ^{
                 NSLog(@"start to save video to photo library");
-                [self saveVideoToPhotoLibraryWithAuthentificationCheck];
+                if (self.config.isExportSenbayVideo) {
+                    [self saveVideoToPhotoLibraryWithFilePath:self->_config.senbayVideoFileURL];
+                }
                 self->_formattedTime = @"00:00";
                 [self->mainTimer invalidate];
-                // AudioServicesPlaySystemSound(1118);
-                if (self->_isDebug) NSLog(@"...end");
+                if (self->_config.isDebug) NSLog(@"...end");
             });
         }];
+        
+        [self->originalVideoInput markAsFinished];
+        [self->originalAudioInput markAsFinished];
+        [self->originalAssetWriter finishWritingWithCompletionHandler:^{
+            if (self.config.isExportOriginalVideo) {
+                [self saveVideoToPhotoLibraryWithFilePath:self->_config.originalVideoFileURL];
+            }
+        }];
+        
+        
     });
 }
 
 
 /////////////////////////////////////////////////////////////////
-- (void) saveVideoToPhotoLibraryWithAuthentificationCheck
+- (void) saveVideoToPhotoLibraryWithFilePath:(NSURL * _Nonnull )filePath
 {
     PHAuthorizationStatus authStatus = [PHPhotoLibrary authorizationStatus];
     if (authStatus == PHAuthorizationStatusNotDetermined ||
@@ -831,31 +692,27 @@ didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer
         authStatus == PHAuthorizationStatusDenied ) {
         [PHPhotoLibrary requestAuthorization:^(PHAuthorizationStatus status) {
             if(status == PHAuthorizationStatusAuthorized){
-                [self saveVideoToPhotoLibrary];
+                [self saveVideoToPhotoLibraryWithFilePath:filePath];
             }else{
-                if (self->_isDebug) {
+                if (self->_config.isDebug) {
                     NSLog(@"error in saveVideoToPhotoLibraryWithAuthentificationCheck");
                 }
             }
         }];
     }else if(authStatus == PHAuthorizationStatusAuthorized){
-        [self saveVideoToPhotoLibrary];
+        
+        library = [PHPhotoLibrary sharedPhotoLibrary];
+        [library performChanges:^{
+            [PHAssetChangeRequest creationRequestForAssetFromVideoAtFileURL:filePath];
+        } completionHandler:^(BOOL success, NSError * _Nullable error) {
+            if (success) {
+                if (self->_config.isDebug) NSLog(@"Sucess to save a video (%@) into Photo Library.", filePath.absoluteString);
+            }else{
+                if (self->_config.isDebug) NSLog(@"**Fail** to save a video (%@) into Photo Library.", filePath.absoluteString);
+                if (error != nil) NSLog(@"%@",error.debugDescription);
+            }
+        }];
     }
-}
-
-- (void) saveVideoToPhotoLibrary
-{
-    library = [PHPhotoLibrary sharedPhotoLibrary];
-    [library performChanges:^{
-        [PHAssetChangeRequest creationRequestForAssetFromVideoAtFileURL:self->_videoFileURL];
-    } completionHandler:^(BOOL success, NSError * _Nullable error) {
-        if (success) {
-            if (self->_isDebug) NSLog(@"Sucess to save the video to Photo Library.");
-        }else{
-            if (self->_isDebug) NSLog(@"**Fail** to save the video to Photo Library.");
-            if (error != nil) NSLog(@"%@",error.debugDescription);
-        }
-    }];
 }
 
 ///////////////////////////////////////////

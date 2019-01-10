@@ -20,11 +20,21 @@
 - (void)viewDidLoad {
     [super viewDidLoad];
     // Do any additional setup after loading the view.
-    camera = [[SenbayCamera alloc] initWithPreviewView:_previewImageView];
-    [camera activate];
-    camera.qrCodeSize = 1280 * 0.18;
+    
+    SenbayCameraConfig * cameraConfig = [[SenbayCameraConfig alloc] initWithBuilderBlock:^(SenbayCameraConfig * _Nonnull config) {
+        config.maxFPS = 30;
+        config.videoSize = AVCaptureSessionPreset1280x720;
+        config.isCamouflageQRCode    = YES;
+        config.isExportOriginalVideo = YES;
+        config.isExportSenbayVideo   = YES;
+        config.isDebug = YES;
+    }];
+    
+    camera = [[SenbayCamera alloc] initWithPreviewView:_previewImageView config:cameraConfig];
+    camera.config = cameraConfig;
     camera.delegate = self;
-    isRecording = NO;
+    
+    [camera activate];
     
     // Accelerometer:     ACCX,ACCY,ACCZ
     [camera.sensorManager.imu      activateAccelerometer];
@@ -61,10 +71,15 @@
         [camera stopRecording];
         isRecording = NO;
         [_captureButton setTitle:@"Start" forState:UIControlStateNormal];
+        
+//        [camera startBroadcastWithStreamName:@"" endpointURL:@""];
+        
     }else{
         [camera startRecording];
         isRecording = YES;
         [_captureButton setTitle:@"Stop" forState:UIControlStateNormal];
+    
+//        [camera finishBroadcast];
     }
 }
 

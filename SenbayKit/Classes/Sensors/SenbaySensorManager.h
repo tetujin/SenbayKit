@@ -16,6 +16,7 @@
 #import "SenbayNetworkSocket.h"
 #import "SenbayScreenBrightness.h"
 #import "SenbayOpenWeatherMap.h"
+#import "SenbayLocalTag.h"
 
 @interface SenbaySensorManager : NSObject
 
@@ -42,6 +43,8 @@
 @property (readonly) SenbayBLE              * ble;
 /// Datagram Socket
 @property (readonly) SenbayNetworkSocket    * networkSocket;
+/// Local Tag
+@property (readonly) SenbayLocalTag         * tag;
 
 - (void) useFreeFormatData:(BOOL) isFreeFormat;
 - (void) setFreeFormatData:(NSString *) freeFormatData;

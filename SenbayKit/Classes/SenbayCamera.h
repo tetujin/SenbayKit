@@ -13,6 +13,8 @@
 #import <CoreMedia/CoreMedia.h>
 
 #import "SenbaySensorManager.h"
+#import "SenbayCameraConfig.h"
+#import "SenbayQRcode.h"
 
 @protocol SenbayCameraDelegate <NSObject>
 @optional
@@ -20,80 +22,66 @@
 - (void) didUpdateCurrentFPS:(int) currentFPS;
 - (void) didUpdateQRCodeContent:(NSString *)qrcodeContent;
 - (void) didUpdateVideoFrame:(UIImage *)videoFrame;
+- (void) senbayCaptureOutput:(AVCaptureOutput *)output didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer fromConnection:(AVCaptureConnection *)connection;
 @end
 
 @interface SenbayCamera : NSObject <AVCaptureVideoDataOutputSampleBufferDelegate, AVCaptureAudioDataOutputSampleBufferDelegate>{
-    AVAssetWriter *senbayAssetWriter;
+    
     AVCaptureVideoDataOutput * videoDataOutput;
     AVCaptureAudioDataOutput * audioDataOutput;
-    AVAssetWriterInput * videoInput;
-    AVAssetWriterInput * audioInput;
     
-    int qrBGColorRed;
-    int qrBGColorGreen;
-    int qrBGColorBlue;
-    // int qrBGColorAlpha;
+    AVAssetWriter *senbayAssetWriter;
+    AVAssetWriterInput * senbayVideoInput;
+    AVAssetWriterInput * senbayAudioInput;
     
-    int qrBLKColorRed;
-    int qrBLKColorGreen;
-    int qrBLKColorBlue;
-    // int qrBKLColorAlpha;
+    AVAssetWriter *originalAssetWriter;
+    AVAssetWriterInput * originalVideoInput;
+    AVAssetWriterInput * originalAudioInput;
     
-    UIImage     * qrCode;
-    UIImage     * qrCodeLayer;
+    UIImage     * qrcodeIamge;
+    UIImage     * qrcodeLayer;
 }
-
-// typedef void (^UIElementUpdateCompletionHundler)(void);
 
 @property (weak, nonatomic) id <SenbayCameraDelegate> delegate;
 
-- (instancetype)initWithPreviewView:(UIImageView *) previewView;
-- (bool) activate;
-- (bool) deactivate;
-- (void) setQRCodeContent:(NSString *) content;
-- (UIImage *) getQRCodeFilterLayer;
+@property (nonnull) SenbayCameraConfig * config;
 
-@property (readonly) AVCaptureSession * captureSession;
-@property (readonly) AVCaptureDevice  * camera;
-@property (readonly) AVCaptureVideoPreviewLayer *previewLayer;
-// @property (readonly) UIImageView           * qrcodeView;
-// @property UIView        * cameraPreviewView;
-@property UIImageView        * basePreviewView;
-@property NSURL     * videoFileURL;
-
-// camera settings
-@property AVFileType              videoFileType;
-@property AVCaptureSessionPreset  videoSize;
-@property AVCaptureDevicePosition cameraPosition;
-@property UIInterfaceOrientation  cameraOrientation;
-@property AVVideoCodecType        videoCodec;
-@property int    maxFPS;
-
-// QR code setting
-@property int    qrCodeSize;
-@property int    qrCodeX;
-@property int    qrCodeY;
-
-@property BOOL   isCamouflageQRCodeAutomatically;
-@property double camouflageInterval;
-@property int    camouflageColorDiff; // 0 - 255 //
-
-- (void) setQRCodeBackgroundColor:(UIColor *)color;
-- (void) setQRCodeBlockColor:(UIColor *)color;
-- (void) setQRCodeBackgroundColorWithRead:(int)r green:(int)g blue:(int)b;
-- (void) setQRCodeBlockColorWithRead:(int)r green:(int)g blue:(int)b;
+@property (nonnull, readonly) SenbayQRcode * qrcode;
 
 // status
 @property (readonly) BOOL       isRecording;
 @property (readonly) NSString * formattedTime;
-@property BOOL isDebug;
+
+// sensor
+@property (readonly) SenbaySensorManager * sensorManager;
+
+// camera related instances
+@property (readonly) AVCaptureSession * captureSession;
+@property (readonly) AVCaptureDevice  * camera;
+@property (readonly) AVCaptureVideoPreviewLayer *previewLayer;
+@property UIImageView        * basePreviewView;
+
+
+- (instancetype)initWithPreviewView:(UIImageView *) previewView;
+- (instancetype)initWithPreviewView:(UIImageView *) previewView config:(SenbayCameraConfig *)config;
+
+// camera controller
+- (bool) activate;
+- (bool) deactivate;
+
+- (void) setQRCodeContent:(NSString *) content;
+- (UIImage *) getQRCodeFilterLayer;
 
 // video controller
 - (void) startRecording;
 - (void) stopRecording;
 
-// sensor
-@property (readonly) SenbaySensorManager * sensorManager;
+// boradcast
+- (void) startBroadcastWithStreamName:(NSString*)streamName endpointURL:(NSString *)endpointURL;
+- (void) finishBroadcast;
+- (void) pouseBroadcast;
+- (void) resumeBroadcast;
+
 
 
 @end

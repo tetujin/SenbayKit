@@ -75,6 +75,10 @@ class SenbayPlayerSwiftViewController: UIViewController, UINavigationControllerD
         rawDataLabel.text = qrcode
     }
     
+    func didDecodeQRcode(_ senbayData: [AnyHashable : Any]!) {
+        
+    }
+    
     override var shouldAutorotate: Bool{
         return false
     }

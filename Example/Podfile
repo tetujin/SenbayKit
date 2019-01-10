@@ -2,7 +2,7 @@ use_frameworks!
 
 target 'SenbayKit_Example' do
   pod 'SenbayKit', :path => '../'
-
+	
   target 'SenbayKit_Tests' do
     inherit! :search_paths
 

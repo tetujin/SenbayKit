@@ -8,6 +8,8 @@
 
 import UIKit
 import SenbayKit
+import HaishinKit
+import ReplayKit
 
 class SenbayCameraSwiftViewController: UIViewController, SenbayCameraDelegate {
 
@@ -24,7 +26,12 @@ class SenbayCameraSwiftViewController: UIViewController, SenbayCameraDelegate {
     override func viewDidLoad() {
         super.viewDidLoad()
         camera = SenbayCamera.init(previewView: previewImageView)
+        camera.config.videoSize = AVCaptureSession.Preset.hd1280x720
+        camera.config.maxFPS    = 30
+        camera.config.isExportOriginalVideo = false;
+        camera.config.isExportSenbayVideo   = false;
         camera.activate()
+        
         camera.delegate = self;
         isRecording = false
         if let location = camera.sensorManager.location {
@@ -45,10 +52,15 @@ class SenbayCameraSwiftViewController: UIViewController, SenbayCameraDelegate {
             camera.stopRecording()
             isRecording = false
             captureButton.setTitle("Start", for: .normal)
+            
+//            camera.startBroadcast(withStreamName:"[xxxx-xxxx-xxxx-xxxx]",
+//                                  endpointURL: "rtmp://username:[xxxx-xxxx-xxxx-xxxx]@a.rtmp.youtube.com/live2")
         }else{
             camera.startRecording()
             isRecording = true
             captureButton.setTitle("Stop", for: .normal)
+            
+//            camera.finishBroadcast()
         }
     }
     
@@ -85,6 +97,18 @@ class SenbayCameraSwiftViewController: UIViewController, SenbayCameraDelegate {
         return .landscapeRight
     }
 
+    func senbayCaptureOutput(_ output: AVCaptureOutput!, didOutputSampleBuffer sampleBuffer: CMSampleBuffer!, from connection: AVCaptureConnection!) {
+
+//        // print(NSStringFromClass(type(of: output)))
+//        if sampleBuffer != nil && output != nil {
+//            let mediaType = NSStringFromClass(type(of: output))
+//            if mediaType == "AVCaptureVideoDataOutput" {
+//                rtmpHelper.processSampleBuffer(sampleBuffer, with: RPSampleBufferType.video)
+//            }else if mediaType == "AVCaptureAudioDataOutput" {
+//                rtmpHelper.processSampleBuffer(sampleBuffer, with: RPSampleBufferType.audioMic)
+//            }
+//        }
+    }
     
     /*
     // MARK: - Navigation
