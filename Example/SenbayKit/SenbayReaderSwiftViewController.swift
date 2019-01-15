@@ -28,7 +28,7 @@ class SenbayReaderSwiftViewController: UIViewController, SenbayReaderDelegate {
         rawDataLabel.text = qrcode
     }
     
-    func didDecodeQRcode(_ senbayData: [AnyHashable : Any]!) {
+    func didDecodeQRcode(_ senbayData: [String : NSObject]!) {
         
     }
     

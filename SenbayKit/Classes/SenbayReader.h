@@ -13,7 +13,7 @@
 @protocol SenbayReaderDelegate <NSObject>
 @optional
 - (void) didDetectQRcode:(NSString *) qrcode;
-- (void) didDecodeQRcode:(NSDictionary *) senbayData;
+- (void) didDecodeQRcode:(NSDictionary <NSString *, NSObject *> *) senbayData;
 @end
 
 @interface SenbayReader : NSObject <AVCaptureMetadataOutputObjectsDelegate, AVCaptureVideoDataOutputSampleBufferDelegate>

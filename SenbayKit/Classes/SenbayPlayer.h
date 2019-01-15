@@ -13,7 +13,7 @@
 @protocol SenbayPlayerDelegate <NSObject>
 @optional
 - (void) didDetectQRcode:(NSString *) qrcode;
-- (void) didDecodeQRcode:(NSDictionary *) senbayData;
+- (void) didDecodeQRcode:(NSDictionary <NSString *, NSObject *> *) senbayData;
 @end
 
 

@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'SenbayKit'
-  s.version          = '0.2.0'
+  s.version          = '0.2.1'
   s.summary          = 'Senbay: A Platform for Instantly Capturing, Integrating, and Restreaming of Synchronized Multiple Sensor-data Streams'
 
 # This description is used to generate tags and improve search results.
@@ -23,18 +23,14 @@ The spread of smartphones allows us to freely capture video and diverse hardware
 
   s.homepage         = 'http://www.senbay.info'
   # s.screenshots     = 'www.example.com/screenshots_1', 'www.example.com/screenshots_2'
-  s.license          = { :type => 'Apache License, Version 2.0', :file => 'LICENSE' }
+  s.license          = { :type => 'Apache2', :file => 'LICENSE' }
   s.author           = { 'Yuuki Nishiyama' => 'yuuki.nishiyama@oulu.fi' }
   s.source           = { :git => 'https://github.com/tetujin/SenbayKit.git', :tag => s.version.to_s }
   # s.social_media_url = 'https://twitter.com/<TWITTER_USERNAME>'
 
   s.ios.deployment_target = '10.0'
-
+  s.swift_version = '4.2'
   s.source_files = 'SenbayKit/Classes/**/*'
-
-  # s.resource_bundles = {
-  #   'SenbayKit-ObjC' => ['SenbayKit-ObjC/Assets/*.png']
-  # }
 
   # s.public_header_files = 'Pod/Classes/**/*.h'
   s.frameworks = 'OpenGLES','AVFoundation','CoreMotion','CoreLocation', 'UIKit', 'CoreBluetooth' #,'MapKit'

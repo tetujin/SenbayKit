@@ -19,7 +19,7 @@
     self = [super init];
     if (self!=nil) {
         format          = [[SenbayFormat alloc] init];
-        _baseNumber     = 122;
+        _baseNumber     = 121;
         _sensors        = [[NSMutableArray alloc] init];
         _imu            = [[SenbayIMU alloc] init];
         _location       = [[SenbayLocation alloc] init];
